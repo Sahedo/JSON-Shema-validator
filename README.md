@@ -1,4 +1,4 @@
-# JSON-Shema-validator
+# JSON-Schema-validator
 This is script for Godot Engine, that validate JSON files by JSON Schema.
 
 # How to use
