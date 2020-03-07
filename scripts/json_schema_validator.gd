@@ -1,4 +1,7 @@
-class_name JSONSchema extends Node
+# JSON Schema main script
+# Inherits from Reference for easy use
+
+class_name JSONSchema extends Reference 
 
 const DEF_KEY_NAME = "schema root"
 const DEF_ERROR_STRING = "##error##"
@@ -94,6 +97,9 @@ func validate(json_data : String, schema: String) -> String:
 	
 	# Normal return empty string, meaning OK
 	return error
+
+func _to_string():
+	return "[JSONSchema:%d]" % get_instance_id()
 
 # TODO: title, description, default, examples, $comment, enum, const
 
