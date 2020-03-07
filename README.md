@@ -7,7 +7,7 @@ Create new JSONSchema object in your script (this script automatically register 
 Call its function validate(json_data, json_schema) where
 json_data - is your data in string format;
 json_schema - is your json_schema in string format.
-2.
+<br>2.
 Use helper class. Create new JSONFile object, open it as it described in ancestor Fire class (and don't forget to close afterall!) use schema_validator field to asigh validator class instance, use json_schema field to assign schema string, use functions load_data() and save_data() to work with your files.
 Example:
 ```gdscript
