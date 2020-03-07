@@ -1,3 +1,9 @@
+# Helper class script
+# Inherits from File, but loads JSON data with optional Schema validation
+# Assign valid JSONSchema instance and provide schema to suitable fields
+# to load data with automatic validation by provided schema
+# otherwise data loads with internal JSON formatting checking
+
 class_name JSONFile extends File
 
 var schema_validator : JSONSchema
@@ -8,8 +14,8 @@ func save_data(a) -> void: # argument is untyped Variant
 		store_line(to_json(a))
 	pass
 
-func load_data() -> String:
-	var result : String
+func load_data():
+	var result
 	if is_open():
 		result = get_as_text()
 		var err : String
