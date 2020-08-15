@@ -88,7 +88,9 @@ func validate(json_data : String, schema: String) -> String:
 			else: 
 				return ""
 		TYPE_DICTIONARY:
-			if parsed_schema.keys().size() > 0 && !parsed_schema.has(JSKW_TYPE):
+			if parsed_schema.empty():
+				return ""
+			elif parsed_schema.keys().size() > 0 && !parsed_schema.has(JSKW_TYPE):
 				return ERR_WRONG_SCHEMA_TYPE
 		_: return ERR_WRONG_SCHEMA_TYPE
 	
