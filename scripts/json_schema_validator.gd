@@ -200,7 +200,8 @@ func _validate_number(input_data: float, input_schema: Dictionary, property_name
 	
 	# processing multiple check
 	if input_schema.has(JSKW_MULT_OF):
-		var mult = int(input_schema[JSKW_MULT_OF]) if integer_mode else float(input_schema[JSKW_MULT_OF])
+		var mult = float(input_schema[JSKW_MULT_OF])
+		mult = int(mult) if integer_mode else mult
 		if fmod(input_data, mult) != 0:
 			if integer_mode:
 				return ERR_MULT_D % [property_name, input_data, mult]
@@ -209,7 +210,8 @@ func _validate_number(input_data: float, input_schema: Dictionary, property_name
 	
 	# processing minimum check
 	if input_schema.has(JSKW_MINIMUM):
-		var minimum = int(input_schema[JSKW_MINIMUM]) if integer_mode else float(input_schema[JSKW_MINIMUM])
+		var minimum = float(input_schema[JSKW_MINIMUM])
+		minimum = int(minimum) if integer_mode else minimum
 		if input_data < minimum:
 			if integer_mode:
 				return ERR_RANGE_D % [property_name, input_data, JSM_GREATER_EQ, minimum]
@@ -218,7 +220,8 @@ func _validate_number(input_data: float, input_schema: Dictionary, property_name
 	
 	# processing exclusive minimum check
 	if input_schema.has(JSKW_MIN_EX):
-		var minimum = int(input_schema[JSKW_MIN_EX]) if integer_mode else float(input_schema[JSKW_MIN_EX])
+		var minimum = float(input_schema[JSKW_MIN_EX])
+		minimum = int(minimum) if integer_mode else minimum
 		if input_data <= minimum:
 			if integer_mode:
 				return ERR_RANGE_D % [property_name, input_data, JSM_GREATER, minimum]
@@ -227,7 +230,8 @@ func _validate_number(input_data: float, input_schema: Dictionary, property_name
 	
 	# processing maximum check
 	if input_schema.has(JSKW_MAXIMUM):
-		var maximum = int(input_schema[JSKW_MAXIMUM]) if integer_mode else float(input_schema[JSKW_MAXIMUM])
+		var maximum = float(input_schema[JSKW_MAXIMUM])
+		maximum = int(maximum) if integer_mode else maximum
 		if input_data > maximum:
 			if integer_mode:
 				return ERR_RANGE_D % [property_name, input_data, JSM_LESS_EQ, maximum]
@@ -236,7 +240,8 @@ func _validate_number(input_data: float, input_schema: Dictionary, property_name
 	
 	# processing exclusive minimum check
 	if input_schema.has(JSKW_MAX_EX):
-		var maximum = int(input_schema[JSKW_MAX_EX]) if integer_mode else float(input_schema[JSKW_MAX_EX])
+		var maximum = float(input_schema[JSKW_MAX_EX])
+		maximum = int(maximum) if integer_mode else maximum
 		if input_data >= maximum:
 			if integer_mode:
 				return ERR_RANGE_D % [property_name, input_data, JSM_LESS, maximum]
