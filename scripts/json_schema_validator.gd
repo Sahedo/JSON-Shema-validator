@@ -67,6 +67,7 @@ const ERR_MULT_F = "Key %s that equal %f must be multiple of %f"
 const ERR_RANGE_D = "Key %s that equal %d must be %s than %d"
 const ERR_RANGE_F = "Key %s that equal %f must be %s than %f"
 const ERR_RANGE_S = "Length of '%s' (%d) %s than declared (%d)"
+const ERR_WRONG_PATTERN = "Content of '%s' does not match its corresponding pattern"
 
 # This is one and only function that need you to call outside
 # If all validation checks passes, this return empty String
@@ -268,7 +269,7 @@ func _validate_object(input_data: Dictionary, input_schema: Dictionary, property
 	return error
 
 func _validate_string(input_data: String, input_schema: Dictionary, property_name: String = DEF_KEY_NAME) -> String:
-	# TODO: pattern, format 
+	# TODO: format 
 	var error : String = ""
 	if input_schema.has(JSKW_LENGTH_MIN):
 		if not (typeof(input_schema[JSKW_LENGTH_MIN]) == TYPE_INT || typeof(input_schema[JSKW_LENGTH_MIN]) == TYPE_REAL):
@@ -281,5 +282,13 @@ func _validate_string(input_data: String, input_schema: Dictionary, property_nam
 			return ERR_TYPE_MISMATCH_GEN % [JST_INTEGER, property_name+"."+JSKW_LENGTH_MAX]
 		if input_data.length() > input_schema[JSKW_LENGTH_MAX]:
 			return ERR_INVALID_JSON_GEN % ERR_RANGE_S % [property_name, input_data.length(), JSM_GREATER, input_schema[JSKW_LENGTH_MAX]]
+	
+	if input_schema.has(JSKW_PATTERN):
+		if not (typeof(input_schema[JSKW_PATTERN]) == TYPE_STRING):
+			return ERR_TYPE_MISMATCH_GEN % [JST_STRING, property_name+"."+JSKW_PATTERN]
+		var regex = RegEx.new()
+		regex.compile(input_schema[JSKW_PATTERN])
+		if regex.search(input_data) == null:
+			return ERR_INVALID_JSON_GEN % ERR_WRONG_PATTERN % property_name
 	
 	return error
