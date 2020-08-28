@@ -52,6 +52,9 @@ const JSM_LESS = "less"
 const JSM_LESS_EQ = "less or equal"
 const JSM_OBJ_DICT = "object (dictionary)"
 
+const JSL_AND = "%s and %s"
+const JSL_OR = "%s or %s"
+
 const ERR_SCHEMA_FALSE = "Schema declared as deny all"
 const ERR_WRONG_SCHEMA_GEN = "Schema error: "
 const ERR_WRONG_SCHEMA_TYPE = "Schema error: schema must be empty object or object with 'type' keyword or boolean value"
@@ -59,6 +62,9 @@ const ERR_WRONG_SHEMA_NOTA = "Schema error: expected that all elements of '%s.%s
 const ERR_WRONG_PROP_TYPE = "Schema error: any schema item must be object with 'type' keyword"
 const ERR_REQ_PROP_GEN = "Schema error: expected array of required properties for '%s'"
 const ERR_REQ_PROP_MISSING = "Missing required property: '%s' for '%s'"
+const ERR_NO_PROP_ADD = "Additional properties are not required: found '%s'"
+const ERR_FEW_PROP = "%d propertie(s) are not enough properties, at least %d are required"
+const ERR_MORE_PROP = "%d propertie(s) are too many properties, at most %d are allowed"
 const ERR_INVALID_JSON_GEN = "Validation fails with message: %s"
 const ERR_INVALID_JSON_EXT = "Invalid JSON data passed with message: %s"
 const ERR_TYPE_MISMATCH_GEN = "Type mismatch: expected %s for '%s'"
@@ -67,7 +73,7 @@ const ERR_MULT_F = "Key %s that equal %f must be multiple of %f"
 const ERR_RANGE_D = "Key %s that equal %d must be %s than %d"
 const ERR_RANGE_F = "Key %s that equal %f must be %s than %f"
 const ERR_RANGE_S = "Length of '%s' (%d) %s than declared (%d)"
-const ERR_WRONG_PATTERN = "Content of '%s' does not match its corresponding pattern"
+const ERR_WRONG_PATTERN = "String '%s' does not match its corresponding pattern"
 
 # This is one and only function that need you to call outside
 # If all validation checks passes, this return empty String
@@ -251,9 +257,37 @@ func _validate_number(input_data: float, input_schema: Dictionary, property_name
 	return ""
 
 func _validate_object(input_data: Dictionary, input_schema: Dictionary, property_name: String = DEF_KEY_NAME) -> String:
-	# TODO: additionalProperties patternProperties propertyNames minProperties maxProperties dependencies
+	# TODO: patternProperties
 	var error : String = ""
-	
+
+	# Process dependencies
+	if input_schema.has(JSKW_DEPEND):
+		for dependency in input_schema.dependencies.keys():
+			if input_data.has(dependency):
+				match typeof(input_schema.dependencies[dependency]):
+					TYPE_ARRAY:
+						if input_schema.has(JSKW_REQ):
+							for property in input_schema.dependencies[dependency]:
+								input_schema.required.append(property)
+						else:
+							input_schema.required = input_schema.dependencies[dependency]
+					TYPE_DICTIONARY:
+						for key in input_schema.dependencies[dependency].keys():
+							if input_schema.has(key):
+								match typeof(input_schema[key]):
+									TYPE_ARRAY:
+										for element in input_schema.dependencies[dependency][key]:
+											input_schema[key].append(element)
+									TYPE_DICTIONARY:
+										for element in input_schema.dependencies[dependency][key].keys():
+											input_schema[key][element] = input_schema.dependencies[dependency][key][element]
+									_:
+										input_schema[key] = input_schema.dependencies[dependency][key]
+							else:
+								input_schema[key] = input_schema.dependencies[dependency][key]
+					_:
+						return ERR_WRONG_SCHEMA_GEN + ERR_TYPE_MISMATCH_GEN % [JSL_OR % [JST_ARRAY, JSM_OBJ_DICT], property_name]
+
 	# Process properties
 	if input_schema.has(JSKW_PROP):
 		
@@ -271,12 +305,47 @@ func _validate_object(input_data: Dictionary, input_schema: Dictionary, property
 		for key in input_schema.properties:
 			if !input_schema.properties[key].has(JSKW_TYPE):
 				return ERR_WRONG_PROP_TYPE
-			# TODO: additional properties check
 			if input_data.has(key):
 				error = _type_selection(JSON.print(input_data[key]), input_schema.properties[key], key)
 			else:
 				pass
 			if error: return error
+	
+	# Process additional properties
+	if input_schema.has(JSKW_PROP_ADD):
+		match typeof(input_schema.additionalProperties):
+			TYPE_BOOL:
+				if not input_schema.additionalProperties:
+					for key in input_data:
+						if not input_schema.properties.has(key):
+							return ERR_NO_PROP_ADD % key
+			TYPE_DICTIONARY:
+				for key in input_data:
+					if not input_schema.properties.has(key):
+						return _type_selection(JSON.print(input_data[key]), input_schema.additionalProperties, key)
+			_:
+				return ERR_WRONG_SCHEMA_GEN + ERR_TYPE_MISMATCH_GEN % [JSL_OR % [JST_BOOLEAN, JSM_OBJ_DICT], property_name]
+	
+	# Process properties names
+	if input_schema.has(JSKW_PROP_NAMES):
+		if typeof(input_schema.propertyNames) != TYPE_DICTIONARY:
+			return ERR_WRONG_SCHEMA_GEN + ERR_TYPE_MISMATCH_GEN % [JSM_OBJ_DICT, property_name]
+		for key in input_data:
+			error = _validate_string(key, input_schema.propertyNames, key)
+			if error: return error
+	
+	# Process minProperties maxProperties
+	if input_schema.has(JSKW_PROP_MIN):
+		if typeof(input_schema[JSKW_PROP_MIN]) != TYPE_REAL:
+			return ERR_WRONG_SCHEMA_GEN + ERR_TYPE_MISMATCH_GEN % [JST_INTEGER, property_name]
+		if input_data.keys().size() < input_schema[JSKW_PROP_MIN]:
+			return ERR_FEW_PROP % [input_data.keys().size(), input_schema[JSKW_PROP_MIN]]
+	
+	if input_schema.has(JSKW_PROP_MAX):
+		if typeof(input_schema[JSKW_PROP_MAX]) != TYPE_REAL:
+			return ERR_WRONG_SCHEMA_GEN + ERR_TYPE_MISMATCH_GEN % [JST_INTEGER, property_name]
+		if input_data.keys().size() > input_schema[JSKW_PROP_MAX]:
+			return ERR_MORE_PROP % [input_data.keys().size(), input_schema[JSKW_PROP_MAX]]
 	
 	return error
 
